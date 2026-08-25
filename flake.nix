@@ -91,6 +91,25 @@
       packages = {
         inherit backend-dev;
 
+        check-go-test-packages = gopkg.stdenvNoCC.mkDerivation {
+          pname = "check-go-test-packages";
+          version = "0.0.1";
+          src = gopkg.lib.cleanSource ./.;
+          nativeBuildInputs = [gopkg.bash gopkg.git gopkg.gawk];
+          dontConfigure = true;
+          buildPhase = ''
+            runHook preBuild
+            patchShebangs ./dev-scripts/check-go-test-packages
+            git init --quiet
+            git add --all
+            ./dev-scripts/check-go-test-packages
+            runHook postBuild
+          '';
+          installPhase = ''
+            touch "$out"
+          '';
+        };
+
         e2e-tests = nodepkgs.buildNpmPackage {
           pname = "picoshare-e2e-tests";
           version = "0.0.1";
