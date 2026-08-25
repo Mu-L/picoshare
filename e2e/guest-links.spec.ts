@@ -56,17 +56,17 @@ test("creates a guest link and uploads a file as a guest", async ({
       },
     ]);
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
-      "Upload complete!"
+      "Upload complete!",
     );
 
     await expect(
-      guestPage.locator("#upload-result upload-links")
+      guestPage.locator("#upload-result upload-links"),
     ).toHaveAttribute("filename", "guest-link-upload.txt");
     await expect(
-      guestPage.locator("#upload-result upload-links #verbose-link-box #link")
+      guestPage.locator("#upload-result upload-links #verbose-link-box #link"),
     ).toBeVisible();
     await expect(
-      guestPage.locator("#upload-result upload-links #short-link-box #link")
+      guestPage.locator("#upload-result upload-links #short-link-box #link"),
     ).toBeVisible();
 
     await guestPage.getByRole("button", { name: "Upload Another" }).click();
@@ -80,7 +80,7 @@ test("creates a guest link and uploads a file as a guest", async ({
       .getByRole("row")
       .filter({ hasText: "guest-link-upload.txt" })
       .getByRole("cell")
-      .nth(expiresColumn)
+      .nth(expiresColumn),
   ).toHaveText("Never");
 });
 
@@ -134,7 +134,7 @@ test("files uploaded through guest link remain accessible after guest link is de
       },
     ]);
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
-      "Upload complete!"
+      "Upload complete!",
     );
   }
 
@@ -208,7 +208,7 @@ test("disables and enables a guest link, affecting access", async ({
   await guestLinkRow.getByRole("button", { name: "Disable" }).click();
 
   await expect(
-    guestLinkRow.getByRole("button", { name: "Copy" })
+    guestLinkRow.getByRole("button", { name: "Copy" }),
   ).not.toBeVisible();
 
   // Try to access the guest link as a guest user.
@@ -232,7 +232,7 @@ test("disables and enables a guest link, affecting access", async ({
   await guestLinkRow.getByRole("button", { name: "Enable" }).click();
 
   await expect(
-    guestLinkRow.getByRole("button", { name: "Copy" })
+    guestLinkRow.getByRole("button", { name: "Copy" }),
   ).toBeVisible();
 
   // Try to access the guest link as a guest user.
@@ -329,7 +329,7 @@ test("guest upload shows expiration dropdown with options limited by guest link"
     ]);
 
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
-      "Upload complete!"
+      "Upload complete!",
     );
   }
 
@@ -427,7 +427,7 @@ test("guest upload with infinite file lifetime shows all expiration options", as
     ]);
 
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
-      "Upload complete!"
+      "Upload complete!",
     );
   }
 
@@ -441,7 +441,7 @@ test("guest upload with infinite file lifetime shows all expiration options", as
 
   // Verify the expiration is "Never".
   await expect(fileRow.getByRole("cell").nth(expiresColumn)).toHaveText(
-    "Never"
+    "Never",
   );
 });
 
@@ -502,7 +502,7 @@ test("guest upload respects selected expiration time", async ({
     ]);
 
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
-      "Upload complete!"
+      "Upload complete!",
     );
   }
 
@@ -523,7 +523,7 @@ test("guest upload respects selected expiration time", async ({
   const expectedDate = new Date();
   expectedDate.setDate(expectedDate.getDate() + 7);
   expect(expirationText).toContain(
-    expectedDate.toISOString().split("T")[0] + " (7 days)"
+    expectedDate.toISOString().split("T")[0] + " (7 days)",
   );
   expect(expirationText).not.toBe("Never");
 });

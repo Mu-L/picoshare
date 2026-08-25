@@ -28,7 +28,7 @@ function uploadFormData(url, formData, progressFn) {
     xhr.addEventListener("error", () => {
       reject(
         "Failed to communicate with server" +
-          (xhr.statusText ? `: ${xhr.statusText}` : ".")
+          (xhr.statusText ? `: ${xhr.statusText}` : "."),
       );
     });
     xhr.send(formData);
@@ -53,7 +53,7 @@ export async function uploadFile(file, expirationTime, note, progressFn) {
   return uploadFormData(
     `/api/entry?expiration=${encodeURIComponent(expirationTime)}`,
     formData,
-    progressFn
+    progressFn,
   );
 }
 
@@ -61,16 +61,16 @@ export async function guestUploadFile(
   file,
   guestLinkID,
   expirationTime,
-  progressFn
+  progressFn,
 ) {
   const formData = new FormData();
   formData.append("file", file);
   return uploadFormData(
     `/api/guest/${guestLinkID}?expiration=${encodeURIComponent(
-      expirationTime
+      expirationTime,
     )}`,
     formData,
-    progressFn
+    progressFn,
   );
 }
 
@@ -99,7 +99,7 @@ export async function editFile(id, filename, expiration, note) {
       if (error.message) {
         return Promise.reject(
           "Failed to communicate with server" +
-            (error.message ? `: ${error.message}` : ".")
+            (error.message ? `: ${error.message}` : "."),
         );
       }
       return Promise.reject(error);
@@ -123,7 +123,7 @@ export async function deleteFile(id) {
       if (error.message) {
         return Promise.reject(
           "Failed to communicate with server" +
-            (error.message ? `: ${error.message}` : ".")
+            (error.message ? `: ${error.message}` : "."),
         );
       }
       return Promise.reject(error);

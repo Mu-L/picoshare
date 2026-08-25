@@ -72,7 +72,7 @@
 
       goVendorHash = "sha256-X2vrEhgEnKKNXRyLCtT+wBbunFHgkcyWZh6DMpQieQ0=";
 
-      npmDepsHash = "sha256-7z4Fdtl0WqriTyh9g1sUlNyoc/vyp5akeP0b/JDzheQ=";
+      npmDepsHash = "sha256-qKir0hhYbP2bR1iPRNxaCEsxxLVqYEsps3gArDM2IDw=";
 
       backend-dev = buildGoModule {
         pname = "picoshare-dev";

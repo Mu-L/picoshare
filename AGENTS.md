@@ -104,7 +104,6 @@ func parseEntryUpdateRequest(r *http.Request) (entryUpdateRequest, error) {
 - Test HTTP handlers by sending requests to the relevant routes.
   - Minimize test coupling by avoiding tests that call HTTP handler functions directly.
 - When a Go test performs multiple HTTP requests in one flow, keep shared fixture setup at the top of the test and isolate each request in its own lexical scope.
-
   - Share state between request blocks explicitly through variables such as cookies or IDs.
   - Example pattern:
 
