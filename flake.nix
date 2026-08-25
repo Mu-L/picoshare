@@ -87,9 +87,28 @@
           mv "$out/bin/picoshare" "$out/bin/picoshare-dev"
         '';
       };
+
+      frontend-check = nodepkgs.buildNpmPackage {
+        pname = "picoshare-frontend-check";
+        version = "0.0.1";
+        src = nodepkgs.lib.cleanSource ./.;
+        inherit npmDepsHash;
+        npmInstallFlags = ["--ignore-scripts"];
+        dontNpmBuild = true;
+        doCheck = true;
+        checkPhase = ''
+          runHook preCheck
+          ./dev-scripts/build-frontend
+          runHook postCheck
+        '';
+        installPhase = ''
+          mkdir -p "$out"
+          printf 'frontend-check passed\n' > "$out/result"
+        '';
+      };
     in {
       packages = {
-        inherit backend-dev;
+        inherit backend-dev frontend-check;
 
         check-go-test-packages = gopkg.stdenvNoCC.mkDerivation {
           pname = "check-go-test-packages";
@@ -141,6 +160,10 @@
             printf 'e2e-tests passed\n' > "$out/result"
           '';
         };
+      };
+
+      checks = {
+        inherit frontend-check;
       };
 
       devShells.default =
