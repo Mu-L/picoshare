@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+
 	"github.com/mtlynch/picoshare/handlers/parse"
 	"github.com/mtlynch/picoshare/picoshare"
 	"github.com/mtlynch/picoshare/random"
@@ -83,7 +84,7 @@ func (s Server) entryPut() http.HandlerFunc {
 			return
 		}
 
-		if err := s.getDB(r).UpdateEntryMetadata(id, metadata); err != nil {
+		if err := s.store.UpdateEntryMetadata(id, metadata); err != nil {
 			if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 				http.Error(w, "Invalid entry ID", http.StatusNotFound)
 				return
@@ -104,7 +105,7 @@ func (s Server) guestEntryPost() http.HandlerFunc {
 			return
 		}
 
-		gl, err := s.getDB(r).GetGuestLink(guestLinkID)
+		gl, err := s.store.GetGuestLink(guestLinkID)
 		if _, ok := errors.AsType[store.GuestLinkNotFoundError](err); ok {
 			http.Error(w, "Invalid guest link ID", http.StatusNotFound)
 			return
@@ -262,7 +263,7 @@ func (s Server) insertFileFromRequest(r *http.Request, expiration picoshare.Expi
 	}
 
 	id := generateEntryID()
-	err = s.getDB(r).InsertEntry(reader,
+	err = s.store.InsertEntry(reader,
 		picoshare.UploadMetadata{
 			ID:          id,
 			Filename:    filename,

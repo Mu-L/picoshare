@@ -1,4 +1,4 @@
-FROM golang:1.26.0 AS builder
+FROM golang:1.26.1 AS builder
 
 ARG TARGETPLATFORM
 
@@ -60,6 +60,7 @@ COPY ./litestream.yml /etc/litestream.yml
 COPY ./LICENSE /app/LICENSE
 
 ENV LITESTREAM_RETENTION=72h
+ENV LITESTREAM_PATH=db
 
 WORKDIR /app
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"errors"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/mileusna/useragent"
+
 	"github.com/mtlynch/picoshare/build"
 	"github.com/mtlynch/picoshare/handlers/parse"
 	"github.com/mtlynch/picoshare/picoshare"
@@ -37,14 +39,11 @@ func (s Server) indexGet() http.HandlerFunc {
 			s.uploadGet()(w, r)
 			return
 		}
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 		}{
 			commonProps: makeCommonProps("PicoShare", r.Context()),
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -92,7 +91,7 @@ func (s Server) guestLinkIndexGet() http.HandlerFunc {
 
 	t := parseTemplatesWithFuncs(fns, "templates/pages/guest-link-index.html")
 	return func(w http.ResponseWriter, r *http.Request) {
-		links, err := s.getDB(r).GetGuestLinks()
+		links, err := s.store.GetGuestLinks()
 		if err != nil {
 			log.Printf("failed to retrieve guest links: %v", err)
 			http.Error(w, "Failed to retrieve guest links", http.StatusInternalServerError)
@@ -103,16 +102,13 @@ func (s Server) guestLinkIndexGet() http.HandlerFunc {
 			return links[i].Created.After(links[j].Created)
 		})
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			GuestLinks []picoshare.GuestLink
 		}{
 			commonProps: makeCommonProps("PicoShare - Guest Links", r.Context()),
 			GuestLinks:  links,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -138,7 +134,7 @@ func (s Server) guestLinksNewGet() http.HandlerFunc {
 			FileLifetime picoshare.FileLifetime
 			IsDefault    bool
 		}
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			ExpirationOptions   []expirationOption
 			FileLifetimeOptions []fileLifetimeOption
@@ -158,10 +154,7 @@ func (s Server) guestLinksNewGet() http.HandlerFunc {
 				{picoshare.NewFileLifetimeInYears(1), false},
 				{picoshare.FileLifetimeInfinite, true},
 			},
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -185,7 +178,7 @@ func (s Server) fileIndexGet() http.HandlerFunc {
 	t := parseTemplatesWithFuncs(fns, "templates/pages/file-index.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		em, err := s.getDB(r).GetEntriesMetadata()
+		em, err := s.store.GetEntriesMetadata()
 		if err != nil {
 			log.Printf("failed to retrieve entries metadata: %v", err)
 			http.Error(w, "failed to retrieve file index", http.StatusInternalServerError)
@@ -194,16 +187,13 @@ func (s Server) fileIndexGet() http.HandlerFunc {
 		sort.Slice(em, func(i, j int) bool {
 			return em[i].Uploaded.After(em[j].Uploaded)
 		})
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			Files []picoshare.UploadMetadata
 		}{
 			commonProps: makeCommonProps("PicoShare - Files", r.Context()),
 			Files:       em,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -232,7 +222,7 @@ func (s Server) fileEditGet() http.HandlerFunc {
 			return
 		}
 
-		metadata, err := s.getDB(r).GetEntryMetadata(id)
+		metadata, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -242,16 +232,13 @@ func (s Server) fileEditGet() http.HandlerFunc {
 			return
 		}
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			Metadata picoshare.UploadMetadata
 		}{
 			commonProps: makeCommonProps("PicoShare - Edit", r.Context()),
 			Metadata:    metadata,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -286,7 +273,7 @@ func (s Server) fileInfoGet() http.HandlerFunc {
 			return
 		}
 
-		metadata, err := s.getDB(r).GetEntryMetadata(id)
+		metadata, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -296,14 +283,14 @@ func (s Server) fileInfoGet() http.HandlerFunc {
 			return
 		}
 
-		downloads, err := s.getDB(r).GetEntryDownloads(id)
+		downloads, err := s.store.GetEntryDownloads(id)
 		if err != nil {
 			log.Printf("error retrieving downloads for id %v: %v", id, err)
 			http.Error(w, "failed to retrieve downloads", http.StatusInternalServerError)
 			return
 		}
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			Metadata      picoshare.UploadMetadata
 			DownloadCount int
@@ -311,10 +298,7 @@ func (s Server) fileInfoGet() http.HandlerFunc {
 			commonProps:   makeCommonProps("PicoShare - File Information", r.Context()),
 			Metadata:      metadata,
 			DownloadCount: len(downloads),
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -337,7 +321,7 @@ func (s Server) fileDownloadsGet() http.HandlerFunc {
 			return
 		}
 
-		db := s.getDB(r)
+		db := s.store
 
 		metadata, err := db.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
@@ -390,7 +374,7 @@ func (s Server) fileDownloadsGet() http.HandlerFunc {
 			}
 		}
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			Metadata       picoshare.UploadMetadata
 			Downloads      []downloadRecord
@@ -400,10 +384,7 @@ func (s Server) fileDownloadsGet() http.HandlerFunc {
 			Metadata:       metadata,
 			Downloads:      records,
 			ShowUniqueOnly: showUniqueOnly,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -418,7 +399,7 @@ func (s Server) fileConfirmDeleteGet() http.HandlerFunc {
 			return
 		}
 
-		metadata, err := s.getDB(r).GetEntryMetadata(id)
+		metadata, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -427,16 +408,13 @@ func (s Server) fileConfirmDeleteGet() http.HandlerFunc {
 			http.Error(w, "failed to retrieve entry", http.StatusInternalServerError)
 			return
 		}
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			Metadata picoshare.UploadMetadata
 		}{
 			commonProps: makeCommonProps("PicoShare - Delete", r.Context()),
 			Metadata:    metadata,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -444,14 +422,11 @@ func (s Server) authGet() http.HandlerFunc {
 	t := parseTemplates("templates/pages/auth.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 		}{
 			commonProps: makeCommonProps("PicoShare - Log in", r.Context()),
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -473,7 +448,7 @@ func (s Server) uploadGet() http.HandlerFunc {
 		"templates/pages/upload.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		settings, err := s.getDB(r).ReadSettings()
+		settings, err := s.store.ReadSettings()
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to read settings from database: %v", err), http.StatusInternalServerError)
 			return
@@ -527,7 +502,7 @@ func (s Server) uploadGet() http.HandlerFunc {
 
 		expirationOptions = append(expirationOptions, expirationOption{"Custom", time.Time{}, false})
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			ExpirationOptions []expirationOption
 			MaxNoteLength     int
@@ -536,10 +511,7 @@ func (s Server) uploadGet() http.HandlerFunc {
 			commonProps:       makeCommonProps("PicoShare - Upload", r.Context()),
 			MaxNoteLength:     parse.MaxFileNoteBytes,
 			ExpirationOptions: expirationOptions,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -566,7 +538,7 @@ func (s Server) guestUploadGet() http.HandlerFunc {
 			return
 		}
 
-		gl, err := s.getDB(r).GetGuestLink(guestLinkID)
+		gl, err := s.store.GetGuestLink(guestLinkID)
 		if _, ok := errors.AsType[store.GuestLinkNotFoundError](err); ok {
 			http.Error(w, "Invalid guest link ID", http.StatusNotFound)
 			return
@@ -577,14 +549,11 @@ func (s Server) guestUploadGet() http.HandlerFunc {
 		}
 
 		if !gl.IsActive() {
-			if err := tInactive.Execute(w, struct {
+			renderTemplate(w, tInactive, struct {
 				commonProps
 			}{
 				commonProps: makeCommonProps("PicoShare - Guest Link Inactive", r.Context()),
-			}); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+			})
 			return
 		}
 
@@ -638,7 +607,7 @@ func (s Server) guestUploadGet() http.HandlerFunc {
 			})
 		}
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			ExpirationOptions []expirationOption
 			GuestLinkMetadata picoshare.GuestLink
@@ -646,10 +615,7 @@ func (s Server) guestUploadGet() http.HandlerFunc {
 			commonProps:       makeCommonProps("PicoShare - Upload", r.Context()),
 			ExpirationOptions: expirationOptions,
 			GuestLinkMetadata: gl,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -657,7 +623,7 @@ func (s Server) settingsGet() http.HandlerFunc {
 	t := parseTemplates("templates/pages/settings.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		settings, err := s.getDB(r).ReadSettings()
+		settings, err := s.store.ReadSettings()
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to read settings from database: %v", err), http.StatusInternalServerError)
 			return
@@ -677,7 +643,7 @@ func (s Server) settingsGet() http.HandlerFunc {
 			}
 		}
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			DefaultExpiration  uint16
 			ExpirationTimeUnit string
@@ -687,10 +653,7 @@ func (s Server) settingsGet() http.HandlerFunc {
 			DefaultExpiration:  defaultExpiration,
 			ExpirationTimeUnit: expirationTimeUnit,
 			DefaultNeverExpire: defaultNeverExpire,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -711,7 +674,7 @@ func (s Server) systemInformationGet() http.HandlerFunc {
 			return
 		}
 
-		if err := t.Execute(w, struct {
+		renderTemplate(w, t, struct {
 			commonProps
 			TotalServingBytes uint64
 			DatabaseFileBytes uint64
@@ -729,10 +692,7 @@ func (s Server) systemInformationGet() http.HandlerFunc {
 			BuildTime:         build.Time(),
 			Version:           build.Version(),
 			Revision:          build.Revision(),
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		})
 	}
 }
 
@@ -759,6 +719,21 @@ func makeCommonProps(title string, ctx context.Context) commonProps {
 		Title:           title,
 		IsAuthenticated: isAuthenticated(ctx),
 		CspNonce:        cspNonce(ctx),
+	}
+}
+
+func renderTemplate(w http.ResponseWriter, t *template.Template, data any) {
+	// Render the complete page before writing any bytes so execution failures do
+	// not commit a successful status with a partial response body.
+	var rendered bytes.Buffer
+	if err := t.Execute(&rendered, data); err != nil {
+		log.Printf("failed to render template %q: %v", t.Name(), err)
+		http.Error(w, "failed to render page", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := rendered.WriteTo(w); err != nil {
+		log.Printf("failed to write rendered template %q: %v", t.Name(), err)
 	}
 }
 

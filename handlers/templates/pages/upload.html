@@ -149,9 +149,8 @@
         file.size > guestLinkMetadata.maxFileBytes
       ) {
         const friendlySize = `${guestLinkMetadata.maxFileBytes} bytes`;
-        document.getElementById(
-          "error-message"
-        ).innerText = `File is too large. Maximum upload size is ${friendlySize}.`;
+        document.getElementById("error-message").innerText =
+          `File is too large. Maximum upload size is ${friendlySize}.`;
         showElement(errorContainer);
         return;
       }
@@ -168,7 +167,7 @@
             file,
             guestLinkMetadata.id,
             readExpiration(),
-            updateProgress
+            updateProgress,
           );
         };
       }
@@ -250,14 +249,14 @@
     pasteEl.addEventListener("paste", (evt) => {
       const timestamp = new Date().toISOString().replaceAll(":", "");
       for (const item of sortClipboardItems(
-        Array.from(evt.clipboardData.items)
+        Array.from(evt.clipboardData.items),
       )) {
         if (item.kind === "string") {
           item.getAsString((s) => {
             doUpload(
               new File([new Blob([s])], `pasted-${timestamp}.txt`, {
                 type: "text/plain;charset=UTF-8",
-              })
+              }),
             );
           });
           return;

@@ -12,7 +12,7 @@ import (
 )
 
 func (s Store) GetEntriesMetadata() ([]picoshare.UploadMetadata, error) {
-	rows, err := s.ctx.Query(`
+	rows, err := s.db.Query(`
 	SELECT
 		entries.id AS id,
 		entries.filename AS filename,
@@ -80,7 +80,7 @@ func (s Store) GetEntriesMetadata() ([]picoshare.UploadMetadata, error) {
 }
 
 func (s Store) ReadEntryFile(id picoshare.EntryID) (io.ReadSeeker, error) {
-	r, err := file.NewReader(s.ctx, id)
+	r, err := file.NewReader(s.db, id)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (s Store) GetEntryMetadata(id picoshare.EntryID) (picoshare.UploadMetadata,
 	var expirationTimeRaw string
 	var fileSizeRaw uint64
 	var guestLinkID *picoshare.GuestLinkID
-	err := s.ctx.QueryRow(`
+	err := s.db.QueryRow(`
 	SELECT
 		entries.filename AS filename,
 		entries.note AS note,
@@ -167,7 +167,7 @@ func (s Store) InsertEntry(reader io.Reader, metadata picoshare.UploadMetadata) 
 	// we can end up in a state with orphaned entries data. We clean it up in
 	// Purge().
 	// See: https://github.com/mtlynch/picoshare/issues/284
-	w := file.NewWriter(s.ctx, metadata.ID, s.chunkSize)
+	w := file.NewWriter(s.db, metadata.ID, s.chunkSize)
 	if _, err := io.Copy(w, reader); err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (s Store) InsertEntry(reader io.Reader, metadata picoshare.UploadMetadata) 
 		return err
 	}
 
-	_, err := s.ctx.Exec(`
+	_, err := s.db.Exec(`
 	INSERT INTO
 		entries
 	(
@@ -209,7 +209,7 @@ func (s Store) InsertEntry(reader io.Reader, metadata picoshare.UploadMetadata) 
 func (s Store) UpdateEntryMetadata(id picoshare.EntryID, metadata picoshare.UploadMetadata) error {
 	log.Printf("updating metadata for entry %s", id)
 
-	res, err := s.ctx.Exec(`
+	res, err := s.db.Exec(`
 	UPDATE entries
 	SET
 		filename = :filename,
@@ -239,7 +239,7 @@ func (s Store) UpdateEntryMetadata(id picoshare.EntryID, metadata picoshare.Uplo
 func (s Store) DeleteEntry(id picoshare.EntryID) error {
 	log.Printf("deleting entry %v", id)
 
-	tx, err := s.ctx.BeginTx(context.Background(), nil)
+	tx, err := s.db.BeginTx(context.Background(), nil)
 	if err != nil {
 		return err
 	}

@@ -42,7 +42,11 @@ func main() {
 
 	ensureDirExists(dbDir)
 
-	store := sqlite.New(*dbPath, isLitestreamEnabled())
+	store := sqlite.New(sqlite.Params{
+		Path:                  *dbPath,
+		OptimizeForLitestream: isLitestreamEnabled(),
+		Now:                   time.Now,
+	})
 
 	spaceChecker := space.NewChecker(*dbPath, &store)
 
@@ -54,7 +58,9 @@ func main() {
 
 	server := handlers.New(authenticator, &store, spaceChecker, &collector, &clock)
 
-	h := gorilla.LoggingHandler(os.Stdout, server.Router())
+	// CrossOriginProtection rejects non-safe cross-origin requests to prevent CSRF.
+	protectedRouter := http.NewCrossOriginProtection().Handler(server.Router())
+	h := gorilla.LoggingHandler(os.Stdout, protectedRouter)
 	if os.Getenv("PS_BEHIND_PROXY") != "" {
 		h = gorilla.ProxyIPHeadersHandler(h)
 	}
@@ -63,11 +69,15 @@ func main() {
 	if port == "" {
 		port = "4001"
 	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "localhost"
+	}
 
 	stop := setupSignalHandler()
 	httpSrv := http.Server{Addr: fmt.Sprintf(":%s", port), Handler: h}
 	go func() {
-		log.Printf("listening on %s", port)
+		log.Printf("listening on http://%s:%s", hostname, port)
 		log.Printf("http server exit: %s", httpSrv.ListenAndServe())
 	}()
 	<-stop
