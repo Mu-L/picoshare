@@ -13,8 +13,8 @@
     # 3.44.2 release
     sqlite-nixpkgs.url = "github:NixOS/nixpkgs/5ad9903c16126a7d949101687af0aa589b1d7d3d";
 
-    # 20.6.1 release
-    nodejs-nixpkgs.url = "github:NixOS/nixpkgs/78058d810644f5ed276804ce7ea9e82d92bee293";
+    # 24.11.1 release
+    nodejs-nixpkgs.url = "github:NixOS/nixpkgs/af84f9d270d404c17699522fab95bbf928a2d92f";
 
     # 0.9.0 release
     shellcheck-nixpkgs.url = "github:NixOS/nixpkgs/8b5ab8341e33322e5b66fb46ce23d724050f6606";
@@ -57,7 +57,8 @@
       };
       sqlite = sqlite-nixpkgs.legacyPackages.${system}.sqlite;
       nodepkgs = nodejs-nixpkgs.legacyPackages.${system};
-      nodejs = nodepkgs.nodejs_20;
+      nodejs = nodepkgs.nodejs_24;
+      buildNpmPackage = nodepkgs.buildNpmPackage.override {inherit nodejs;};
       shellcheck = shellcheck-nixpkgs.legacyPackages.${system}.shellcheck;
       sqlfluff = sqlfluff-nixpkgs.legacyPackages.${system}.sqlfluff;
       flyctl = flyctl-nixpkgs.legacyPackages.${system}.flyctl;
@@ -66,7 +67,7 @@
 
       goVendorHash = "sha256-X2vrEhgEnKKNXRyLCtT+wBbunFHgkcyWZh6DMpQieQ0=";
 
-      npmDepsHash = "sha256-qKir0hhYbP2bR1iPRNxaCEsxxLVqYEsps3gArDM2IDw=";
+      npmDepsHash = "sha256-vlpvjZBjSn+dx4s+mdp/2kI4TbXmpP+kWYwjwRLhBxE=";
 
       backend-dev = buildGoModule {
         pname = "picoshare-dev";
@@ -82,16 +83,19 @@
         '';
       };
 
-      frontend-check = nodepkgs.buildNpmPackage {
+      frontend-check = buildNpmPackage {
         pname = "picoshare-frontend-check";
         version = "0.0.1";
         src = nodepkgs.lib.cleanSource ./.;
         inherit npmDepsHash;
         npmInstallFlags = ["--ignore-scripts"];
         dontNpmBuild = true;
+        nativeBuildInputs = [nodepkgs.git];
         doCheck = true;
         checkPhase = ''
           runHook preCheck
+          git init --quiet
+          git add --all
           ./dev-scripts/build-frontend
           runHook postCheck
         '';
@@ -129,7 +133,7 @@
             fontDirectories = [nodepkgs.dejavu_fonts];
           };
         in
-          nodepkgs.buildNpmPackage {
+          buildNpmPackage {
             pname = "picoshare-e2e-tests";
             version = "0.0.1";
             src = nodepkgs.lib.cleanSource ./.;

@@ -11,7 +11,7 @@ The steps below show you how to quickly set up a development environment for Pic
 ### Requirements
 
 - Go 1.26 or higher
-- Node.js 20.x or higher
+- Node.js 24.x or higher
 
 ### Install frontend dev dependencies
 

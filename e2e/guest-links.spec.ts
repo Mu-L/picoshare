@@ -197,9 +197,7 @@ test("disables and enables a guest link, affecting access", async ({
   // Disable the guest link.
   await guestLinkRow.getByRole("button", { name: "Disable" }).click();
 
-  await expect(
-    guestLinkRow.getByRole("button", { name: "Copy" }),
-  ).not.toBeVisible();
+  await expect(guestLinkRow.getByRole("button", { name: "Copy" })).toBeHidden();
 
   // Try to access the guest link as a guest user.
   {
@@ -286,10 +284,9 @@ test("guest upload shows expiration dropdown with options limited by guest link"
     expect(expirationOptions).not.toContain("Never");
 
     // Check that 7 days is selected by default.
-    const defaultSelected = await guestPage
-      .locator("#expiration-select option[selected]")
-      .textContent();
-    expect(defaultSelected).toBe("7 days");
+    await expect(
+      guestPage.locator("#expiration-select option[selected]"),
+    ).toHaveText("7 days");
 
     // Upload a file to verify the default expiration is applied correctly.
     await guestPage.locator(".file-input").setInputFiles([
@@ -379,10 +376,9 @@ test("guest upload with infinite file lifetime shows all expiration options", as
     expect(expirationOptions).toContain("Never");
 
     // Check that Never is selected by default.
-    const defaultSelected = await guestPage
-      .locator("#expiration-select option[selected]")
-      .textContent();
-    expect(defaultSelected).toBe("Never");
+    await expect(
+      guestPage.locator("#expiration-select option[selected]"),
+    ).toHaveText("Never");
 
     // Upload a file to verify the default "Never" expiration is applied correctly.
     await guestPage.locator(".file-input").setInputFiles([
@@ -477,16 +473,13 @@ test("guest upload respects selected expiration time", async ({
     .filter({ hasText: "custom-expiration-test.txt" });
   await expect(fileRow).toBeVisible();
 
-  const expirationText = await fileRow
-    .getByRole("cell")
-    .nth(expiresColumn)
-    .textContent();
-
   // Verify the expiration contains the expected date (7 days from now, not 30).
   const expectedDate = new Date();
   expectedDate.setDate(expectedDate.getDate() + 7);
-  expect(expirationText).toContain(
+  await expect(fileRow.getByRole("cell").nth(expiresColumn)).toContainText(
     expectedDate.toISOString().split("T")[0] + " (7 days)",
   );
-  expect(expirationText).not.toBe("Never");
+  await expect(fileRow.getByRole("cell").nth(expiresColumn)).not.toHaveText(
+    "Never",
+  );
 });

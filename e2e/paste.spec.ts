@@ -58,7 +58,7 @@ test("pastes text in the upload input", async ({ page }) => {
     .getByRole("link")
     .click();
 
-  await expect(await page.innerText("body")).toEqual("I'm pasting dummy text!");
+  await expect(page.locator("body")).toHaveText("I'm pasting dummy text!");
 });
 
 test("pastes text in the upload input that requires UTF-8", async ({
@@ -88,7 +88,5 @@ test("pastes text in the upload input that requires UTF-8", async ({
     .locator("#upload-result upload-links #verbose-link-box #link")
     .click();
 
-  await expect(await page.innerText("body")).toEqual(
-    "璇疯緭鍏ユ偍鐨勯棶棰橈細",
-  );
+  await expect(page.locator("body")).toHaveText("璇疯緭鍏ユ偍鐨勯棶棰橈細");
 });

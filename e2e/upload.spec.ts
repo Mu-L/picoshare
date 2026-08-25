@@ -278,7 +278,7 @@ test("uploads a file and edits its note", async ({ page }) => {
 
   await expect(page).toHaveURL("/files");
   await expect(
-    await page
+    page
       .getByRole("row")
       .filter({ hasText: "upload-with-note-i-will-edit.txt" })
       .getByRole("cell")
