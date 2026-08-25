@@ -24,7 +24,7 @@ func (s Store) Purge() error {
 func (s Store) deleteExpiredEntries() error {
 	log.Printf("deleting expired entries from database")
 
-	tx, err := s.ctx.BeginTx(context.Background(), nil)
+	tx, err := s.db.BeginTx(context.Background(), nil)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (s Store) deleteOrphanedRows() error {
 
 	// Delete rows from entries_data if they don't reference valid rows in
 	// entries. This can happen if the entry insertion fails partway through.
-	rows, err := s.ctx.Exec(`
+	rows, err := s.db.Exec(`
    	DELETE FROM
    		entries_data
    	WHERE

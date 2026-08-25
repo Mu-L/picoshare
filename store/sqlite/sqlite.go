@@ -18,7 +18,7 @@ const (
 
 type (
 	Store struct {
-		ctx       *sql.DB
+		db        *sql.DB
 		chunkSize uint64
 	}
 
@@ -35,12 +35,12 @@ func New(path string, optimizeForLitestream bool) Store {
 // chunk size for writing files. Most callers should just use New().
 func NewWithChunkSize(path string, chunkSize uint64, optimizeForLitestream bool) Store {
 	log.Printf("reading DB from %s", path)
-	ctx, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	if _, err := ctx.Exec(`
+	if _, err := db.Exec(`
 		PRAGMA temp_store = FILE;
 		PRAGMA journal_mode = WAL;
 		PRAGMA foreign_keys = 1;
@@ -49,7 +49,7 @@ func NewWithChunkSize(path string, chunkSize uint64, optimizeForLitestream bool)
 	}
 
 	if optimizeForLitestream {
-		if _, err := ctx.Exec(`
+		if _, err := db.Exec(`
 			-- Apply Litestream recommendations: https://litestream.io/tips/
 			PRAGMA busy_timeout = 5000;
 			PRAGMA synchronous = NORMAL;
@@ -59,10 +59,10 @@ func NewWithChunkSize(path string, chunkSize uint64, optimizeForLitestream bool)
 		}
 	}
 
-	applyMigrations(ctx)
+	applyMigrations(db)
 
 	return Store{
-		ctx:       ctx,
+		db:        db,
 		chunkSize: chunkSize,
 	}
 }
