@@ -22,11 +22,16 @@ go_test_flags=("-tags=netgo,osusergo,sqlite_json")
 go_test_flags+=("-fullpath")
 readonly COVERAGE_FILE_RAW=".coverage.out"
 readonly COVERAGE_FILE_HTML=".coverage.html"
-if [[ "$1" = "--full" ]]; then
+if [[ "$#" -eq 0 ]]; then
+  :
+elif [[ "$#" -eq 1 && "$1" == "--full" ]]; then
   full_test="1"
   go_test_flags+=("-v")
   go_test_flags+=("-race")
   go_test_flags+=("--coverprofile=${COVERAGE_FILE_RAW}")
+else
+  printf 'Usage: %s [--full]\n' "$0" >&2
+  exit 2
 fi
 
 # Exit on unset variable.
