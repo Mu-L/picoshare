@@ -13,3 +13,4 @@ set -u
 ./dev-scripts/check-go-formatting
 ./dev-scripts/check-go-test-packages
 ./dev-scripts/lint-sql
+./dev-scripts/check-bash

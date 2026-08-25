@@ -69,6 +69,20 @@
 
       npmDepsHash = "sha256-vlpvjZBjSn+dx4s+mdp/2kI4TbXmpP+kWYwjwRLhBxE=";
 
+      npmDependenciesSrc = gopkg.lib.fileset.toSource {
+        root = ./.;
+        fileset = gopkg.lib.fileset.unions [
+          ./package.json
+          ./package-lock.json
+        ];
+      };
+
+      npmDeps = nodepkgs.fetchNpmDeps {
+        name = "picoshare-npm-deps";
+        src = npmDependenciesSrc;
+        hash = npmDepsHash;
+      };
+
       mkBuildStep = {
         name,
         command,
@@ -113,8 +127,32 @@
       frontend-check = buildNpmPackage {
         pname = "picoshare-frontend-check";
         version = "0.0.1";
-        src = nodepkgs.lib.cleanSource ./.;
-        inherit npmDepsHash;
+        src = gopkg.lib.fileset.toSource {
+          root = ./.;
+          fileset =
+            gopkg.lib.fileset.intersection
+            (gopkg.lib.fileset.gitTracked ./.)
+            (gopkg.lib.fileset.unions [
+              ./dev-scripts/build-frontend
+              ./.gitignore
+              ./.prettierignore
+              ./.prettierrc
+              ./eslint.config.js
+              ./package.json
+              ./package-lock.json
+              (gopkg.lib.fileset.fileFilter (file:
+                file.hasExt "md"
+                || file.hasExt "js"
+                || file.hasExt "html"
+                || file.hasExt "css"
+                || file.hasExt "json"
+                || file.hasExt "yaml"
+                || file.hasExt "yml"
+                || file.hasExt "ts")
+              ./.)
+            ]);
+        };
+        inherit npmDeps;
         npmInstallFlags = ["--ignore-scripts"];
         dontNpmBuild = true;
         nativeBuildInputs = [nodepkgs.git];
@@ -151,22 +189,69 @@
           extraInputs = [sqlfluff];
         };
 
-        check-go-test-packages = gopkg.stdenvNoCC.mkDerivation {
-          pname = "check-go-test-packages";
-          version = "0.0.1";
-          src = gopkg.lib.cleanSource ./.;
-          nativeBuildInputs = [gopkg.bash gopkg.git gopkg.gawk];
-          dontConfigure = true;
-          buildPhase = ''
-            runHook preBuild
-            patchShebangs ./dev-scripts/check-go-test-packages
+        check-go-formatting = mkBuildStep {
+          name = "check-go-formatting";
+          command = "./dev-scripts/check-go-formatting";
+          src = gopkg.lib.fileset.toSource {
+            root = ./.;
+            fileset =
+              gopkg.lib.fileset.intersection
+              (gopkg.lib.fileset.gitTracked ./.)
+              (gopkg.lib.fileset.unions [
+                ./dev-scripts/check-go-formatting
+                (gopkg.lib.fileset.fileFilter (file: file.hasExt "go") ./.)
+              ]);
+          };
+          extraInputs = [go];
+        };
+
+        check-go-test-packages = mkBuildStep {
+          name = "check-go-test-packages";
+          command = "./dev-scripts/check-go-test-packages";
+          src = gopkg.lib.fileset.toSource {
+            root = ./.;
+            fileset =
+              gopkg.lib.fileset.intersection
+              (gopkg.lib.fileset.gitTracked ./.)
+              (gopkg.lib.fileset.unions [
+                ./dev-scripts/check-go-test-packages
+                (gopkg.lib.fileset.fileFilter
+                  (file: gopkg.lib.hasSuffix "_test.go" file.name)
+                  ./.)
+              ]);
+          };
+          extraInputs = [gopkg.git gopkg.gawk];
+          setup = ''
             git init --quiet
             git add --all
-            ./dev-scripts/check-go-test-packages
-            runHook postBuild
           '';
-          installPhase = ''
-            touch "$out"
+        };
+
+        check-trailing-newline = mkBuildStep {
+          name = "check-trailing-newline";
+          command = "./dev-scripts/check-trailing-newline";
+          src = gopkg.lib.fileset.toSource {
+            root = ./.;
+            fileset = gopkg.lib.fileset.gitTracked ./.;
+          };
+          extraInputs = [gopkg.git gopkg.coreutils gopkg.findutils gopkg.gnugrep];
+          setup = ''
+            git init --quiet
+            git add --all
+          '';
+        };
+
+        check-trailing-whitespace = mkBuildStep {
+          name = "check-trailing-whitespace";
+          command = "./dev-scripts/check-trailing-whitespace";
+          src = gopkg.lib.fileset.toSource {
+            root = ./.;
+            fileset = gopkg.lib.fileset.gitTracked ./.;
+          };
+          extraInputs = [gopkg.git gopkg.gnugrep];
+          setup = ''
+            git init --quiet
+            git add --all
           '';
         };
 
@@ -179,8 +264,19 @@
           buildNpmPackage {
             pname = "picoshare-e2e-tests";
             version = "0.0.1";
-            src = nodepkgs.lib.cleanSource ./.;
-            inherit npmDepsHash;
+            src = gopkg.lib.fileset.toSource {
+              root = ./.;
+              fileset =
+                gopkg.lib.fileset.intersection
+                (gopkg.lib.fileset.gitTracked ./.)
+                (gopkg.lib.fileset.unions [
+                  ./dev-scripts/run-e2e-tests
+                  ./e2e
+                  ./package.json
+                  ./package-lock.json
+                ]);
+            };
+            inherit npmDeps;
             npmInstallFlags = ["--ignore-scripts"];
             dontNpmBuild = true;
             nativeBuildInputs = [nodejs playwrightBrowsers backend-dev];
@@ -210,6 +306,14 @@
 
       checks = {
         inherit frontend-check;
+        inherit
+          (self.packages.${system})
+          check-go-formatting
+          check-go-test-packages
+          check-trailing-newline
+          check-trailing-whitespace
+          lint-sql
+          ;
       };
 
       devShells.default =
