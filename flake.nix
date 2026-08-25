@@ -157,6 +157,21 @@
             export PLAYWRIGHT_BROWSERS_PATH=${playwright}
             export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
 
+            # Restore the exact lockfile dependency set when manifests change.
+            if [ -f package.json ]; then
+              if [ ! -d node_modules ] \
+                || [ package.json -nt node_modules ] \
+                || [ package-lock.json -nt node_modules ]; then
+                echo "Installing npm packages..."
+                if npm ci; then
+                  touch node_modules
+                else
+                  echo "Failed to install npm packages" >&2
+                  exit 1
+                fi
+              fi
+            fi
+
             echo "shellcheck" "$(shellcheck --version | grep '^version:')"
             sqlfluff --version
             fly version | cut -d ' ' -f 1-3
