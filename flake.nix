@@ -179,6 +179,7 @@
             go-nixpkgs.legacyPackages.${system}.gocode-gomod
             go-nixpkgs.legacyPackages.${system}.godef
             go-nixpkgs.legacyPackages.${system}.golint
+            go-nixpkgs.legacyPackages.${system}.gci
             go
             sqlite
             nodejs

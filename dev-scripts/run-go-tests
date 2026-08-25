@@ -44,6 +44,32 @@ fi
 
 go vet ./...
 
+# Install gci if it's not present.
+GCI_PATH="$(go env GOPATH)/bin/gci"
+readonly GCI_PATH
+readonly GCI_VERSION="v0.13.7"
+if [[ ! -f "${GCI_PATH}" ]]; then
+  CGO_ENABLED=0 go install "github.com/daixiang0/gci@${GCI_VERSION}"
+fi
+mapfile -t GO_PACKAGE_DIRS < <(go list -f '{{.Dir}}' ./...)
+readonly GO_PACKAGE_DIRS
+GCI_DIFF=$("${GCI_PATH}" diff \
+  --skip-generated \
+  --section standard \
+  --section default \
+  --section "prefix(github.com/mtlynch/picoshare)" \
+  "${GO_PACKAGE_DIRS[@]}")
+readonly GCI_DIFF
+if [[ -n "${GCI_DIFF}" ]]; then
+  echo "${GCI_DIFF}"
+  echo >&2 "Go imports are not grouped correctly. Run:"
+  echo >&2 "  ${GCI_PATH} write --skip-generated --section standard \\"
+  echo >&2 "    --section default \\"
+  echo >&2 "    --section 'prefix(github.com/mtlynch/picoshare)' \\"
+  echo >&2 "    \$(go list -f '{{.Dir}}' ./...)"
+  exit 1
+fi
+
 # Install go-critic if it's not present.
 GOCRITIC_PATH="$(go env GOPATH)/bin/go-critic"
 readonly GOCRITIC_PATH
