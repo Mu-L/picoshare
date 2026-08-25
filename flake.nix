@@ -191,9 +191,12 @@
           ];
 
           shellHook = ''
-            # Avoid sharing GOPATH with other projects.
-            PROJECT_NAME="$(basename "$PWD")"
-            export GOPATH="$HOME/.local/share/go-workspaces/$PROJECT_NAME"
+            # Ignore user-level Go settings and keep installed tools local to
+            # this checkout.
+            export GOENV=off
+            export GOTOOLCHAIN=local
+            export GOBIN="$PWD/bin"
+            export PATH="$GOBIN:$PATH"
 
             # Restore the exact lockfile dependency set when manifests change.
             if [ -f package.json ]; then
