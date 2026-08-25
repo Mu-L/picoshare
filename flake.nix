@@ -69,6 +69,33 @@
 
       npmDepsHash = "sha256-vlpvjZBjSn+dx4s+mdp/2kI4TbXmpP+kWYwjwRLhBxE=";
 
+      mkBuildStep = {
+        name,
+        command,
+        src ? gopkg.lib.cleanSource ./.,
+        extraInputs ? [],
+        setup ? "",
+        extraAttrs ? {},
+      }:
+        gopkg.stdenvNoCC.mkDerivation ({
+            pname = name;
+            version = "0.0.1";
+            inherit src;
+            nativeBuildInputs = [gopkg.bash] ++ extraInputs;
+            dontConfigure = true;
+            buildPhase = ''
+              runHook preBuild
+              patchShebangs ./dev-scripts
+              ${setup}
+              ${command}
+              runHook postBuild
+            '';
+            installPhase = ''
+              touch "$out"
+            '';
+          }
+          // extraAttrs);
+
       backend-dev = buildGoModule {
         pname = "picoshare-dev";
         version = "0.0.1";
@@ -107,6 +134,22 @@
     in {
       packages = {
         inherit backend-dev frontend-check;
+
+        lint-sql = mkBuildStep {
+          name = "lint-sql";
+          command = "./dev-scripts/lint-sql";
+          src = gopkg.lib.fileset.toSource {
+            root = ./.;
+            fileset = gopkg.lib.fileset.unions [
+              ./dev-scripts/lint-sql
+              ./.sqlfluffignore
+              (gopkg.lib.fileset.fileFilter
+                (file: file.hasExt "sql")
+                ./store/sqlite/migrations)
+            ];
+          };
+          extraInputs = [sqlfluff];
+        };
 
         check-go-test-packages = gopkg.stdenvNoCC.mkDerivation {
           pname = "check-go-test-packages";
