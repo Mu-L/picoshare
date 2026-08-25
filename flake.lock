@@ -2,17 +2,17 @@
   "nodes": {
     "air-nixpkgs": {
       "locked": {
-        "lastModified": 1737332832,
-        "narHash": "sha256-Qs5piKqQSE/ql001ZK1kAXF9ebfJBivgNjkG8THQ4iI=",
+        "lastModified": 1785942494,
+        "narHash": "sha256-61SAhC6F21OMqYEfGugMgJEmoM+MppKBDgqXT88KSck=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "678af34d5e4d198fcd948a7db8b89a618d8e62fa",
+        "rev": "f2154edcc6bedad158da01133795b2cfafb3fa6a",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "678af34d5e4d198fcd948a7db8b89a618d8e62fa",
+        "rev": "f2154edcc6bedad158da01133795b2cfafb3fa6a",
         "type": "github"
       }
     },

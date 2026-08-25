@@ -31,8 +31,8 @@
     # 0.3.13 release
     litestream-nixpkgs.url = "github:NixOS/nixpkgs/a343533bccc62400e8a9560423486a3b6c11a23b";
 
-    # 1.61.7 release
-    air-nixpkgs.url = "github:NixOS/nixpkgs/678af34d5e4d198fcd948a7db8b89a618d8e62fa";
+    # 1.67.4 release
+    air-nixpkgs.url = "github:NixOS/nixpkgs/f2154edcc6bedad158da01133795b2cfafb3fa6a";
   };
 
   outputs = {
