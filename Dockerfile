@@ -60,6 +60,7 @@ COPY ./litestream.yml /etc/litestream.yml
 COPY ./LICENSE /app/LICENSE
 
 ENV LITESTREAM_RETENTION=72h
+ENV LITESTREAM_PATH=db
 
 WORKDIR /app
 
