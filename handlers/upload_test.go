@@ -101,7 +101,7 @@ func TestEntryPost(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 			s := handlers.New(mockAuthenticator{}, &dataStore, nilSpaceChecker, nilGarbageCollector, handlers.NewClock())
 
 			formData, contentType := createMultipartFormBody(tt.filename, tt.note, bytes.NewBuffer([]byte(tt.contents)))
@@ -246,7 +246,7 @@ func TestEntryPut(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 			originalData := "dummy original data"
 			metadata := originalEntry
 			metadata.Size = mustParseFileSize(len(originalData))
@@ -562,7 +562,7 @@ func TestGuestUpload(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 			if err := dataStore.InsertGuestLink(tt.guestLinkInStore); err != nil {
 				t.Fatalf("failed to insert dummy guest link: %v", err)
 			}
@@ -688,7 +688,7 @@ func TestGuestUploadAcceptHeader(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("%s [%s]", tt.explanation, tt.acceptHeader), func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 			guestLink := picoshare.GuestLink{
 				ID:              picoshare.GuestLinkID("abcdefgh23456789"),
 				Created:         mustParseTime("2022-05-26T00:00:00Z"),

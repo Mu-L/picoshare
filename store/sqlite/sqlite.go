@@ -17,9 +17,17 @@ const (
 )
 
 type (
+	Params struct {
+		Path                  string
+		OptimizeForLitestream bool
+		Now                   func() time.Time
+		PicoShareChunkSize    uint64
+	}
+
 	Store struct {
 		db        *sql.DB
 		chunkSize uint64
+		now       func() time.Time
 	}
 
 	rowScanner interface {
@@ -27,15 +35,9 @@ type (
 	}
 )
 
-func New(path string, optimizeForLitestream bool) Store {
-	return NewWithChunkSize(path, defaultChunkSize, optimizeForLitestream)
-}
-
-// NewWithChunkSize creates a SQLite-based datastore with the user-specified
-// chunk size for writing files. Most callers should just use New().
-func NewWithChunkSize(path string, chunkSize uint64, optimizeForLitestream bool) Store {
-	log.Printf("reading DB from %s", path)
-	db, err := sql.Open("sqlite3", path)
+func New(params Params) Store {
+	log.Printf("reading DB from %s", params.Path)
+	db, err := sql.Open("sqlite3", params.Path)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -48,7 +50,7 @@ func NewWithChunkSize(path string, chunkSize uint64, optimizeForLitestream bool)
 		log.Fatalf("failed to set pragmas: %v", err)
 	}
 
-	if optimizeForLitestream {
+	if params.OptimizeForLitestream {
 		if _, err := db.Exec(`
 			-- Apply Litestream recommendations: https://litestream.io/tips/
 			PRAGMA busy_timeout = 5000;
@@ -61,9 +63,15 @@ func NewWithChunkSize(path string, chunkSize uint64, optimizeForLitestream bool)
 
 	applyMigrations(db)
 
+	chunkSize := params.PicoShareChunkSize
+	if chunkSize == 0 {
+		chunkSize = defaultChunkSize
+	}
+
 	return Store{
 		db:        db,
 		chunkSize: chunkSize,
+		now:       params.Now,
 	}
 }
 

@@ -226,7 +226,7 @@ func TestGuestLinksPost(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 			c := mockClock{tt.currentTime}
 			s := handlers.New(mockAuthenticator{}, &dataStore, nilSpaceChecker, nilGarbageCollector, c)
 
@@ -284,7 +284,7 @@ func makeGuestUploadCountLimit(i int) picoshare.GuestUploadCountLimit {
 }
 
 func TestDeleteExistingGuestLink(t *testing.T) {
-	dataStore := test_sqlite.New()
+	dataStore := test_sqlite.New(t)
 	dataStore.InsertGuestLink(picoshare.GuestLink{
 		ID:         picoshare.GuestLinkID("abcdefgh23456789"),
 		Created:    mustParseTime("2025-05-25T00:00:00Z"),
@@ -313,7 +313,7 @@ func TestDeleteExistingGuestLink(t *testing.T) {
 }
 
 func TestDeleteNonExistentGuestLink(t *testing.T) {
-	dataStore := test_sqlite.New()
+	dataStore := test_sqlite.New(t)
 	s := handlers.New(mockAuthenticator{}, &dataStore, nilSpaceChecker, nilGarbageCollector, handlers.NewClock())
 
 	req := httptest.NewRequest(
@@ -333,7 +333,7 @@ func TestDeleteNonExistentGuestLink(t *testing.T) {
 }
 
 func TestDeleteInvalidGuestLink(t *testing.T) {
-	dataStore := test_sqlite.New()
+	dataStore := test_sqlite.New(t)
 	s := handlers.New(mockAuthenticator{}, &dataStore, nilSpaceChecker, nilGarbageCollector, handlers.NewClock())
 
 	req := httptest.NewRequest(
@@ -472,7 +472,7 @@ func TestEnableDisableGuestLink(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 
 			if !tt.guestLinkInStore.Empty() {
 				if err := dataStore.InsertGuestLink(tt.guestLinkInStore); err != nil {

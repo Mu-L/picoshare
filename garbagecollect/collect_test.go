@@ -15,7 +15,7 @@ import (
 )
 
 func TestCollectDoesNothingWhenStoreIsEmpty(t *testing.T) {
-	dataStore := test_sqlite.New()
+	dataStore := test_sqlite.New(t)
 	c := garbagecollect.NewCollector(dataStore)
 	err := c.Collect()
 	if err != nil {
@@ -34,9 +34,9 @@ func TestCollectDoesNothingWhenStoreIsEmpty(t *testing.T) {
 }
 
 func TestCollectExpiredFile(t *testing.T) {
-	dataStore := test_sqlite.New()
+	dataStore := test_sqlite.New(t)
 	d := "dummy data"
-	expireInFiveMins := makeRelativeExpirationTime(5 * time.Minute)
+	expireInFiveMins := mustParseExpirationTime("2025-01-01T00:05:00Z")
 	dataStore.InsertEntry(strings.NewReader(d),
 		picoshare.UploadMetadata{
 			ID:       picoshare.EntryID("AAAAAAAAAAAA"),
@@ -69,7 +69,7 @@ func TestCollectExpiredFile(t *testing.T) {
 		picoshare.UploadMetadata{
 			ID:       picoshare.EntryID("DDDDDDDDDDDD"),
 			Uploaded: mustParseTime("2023-01-01T00:00:00Z"),
-			Expires:  makeRelativeExpirationTime(-1 * time.Second),
+			Expires:  mustParseExpirationTime("2024-12-31T23:59:59Z"),
 			Size:     mustParseFileSize(len(d)),
 		})
 	dataStore.InsertEntry(strings.NewReader(d),
@@ -121,7 +121,7 @@ func TestCollectExpiredFile(t *testing.T) {
 }
 
 func TestCollectDoesNothingWhenNoFilesAreExpired(t *testing.T) {
-	dataStore := test_sqlite.New()
+	dataStore := test_sqlite.New(t)
 	d := "dummy data"
 	dataStore.InsertEntry(strings.NewReader(d),
 		picoshare.UploadMetadata{
@@ -205,10 +205,6 @@ func mustParseExpirationTime(s string) picoshare.ExpirationTime {
 		panic(err)
 	}
 	return picoshare.ExpirationTime(et)
-}
-
-func makeRelativeExpirationTime(delta time.Duration) picoshare.ExpirationTime {
-	return picoshare.ExpirationTime(time.Now().UTC().Add(delta).Truncate(time.Second))
 }
 
 func mustParseFileSize(val int) picoshare.FileSize {

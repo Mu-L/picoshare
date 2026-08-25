@@ -42,7 +42,11 @@ func main() {
 
 	ensureDirExists(dbDir)
 
-	store := sqlite.New(*dbPath, isLitestreamEnabled())
+	store := sqlite.New(sqlite.Params{
+		Path:                  *dbPath,
+		OptimizeForLitestream: isLitestreamEnabled(),
+		Now:                   time.Now,
+	})
 
 	spaceChecker := space.NewChecker(*dbPath, &store)
 

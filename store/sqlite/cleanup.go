@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"time"
 )
 
 // Purge deletes expired entries and clears orphaned rows from the database.
@@ -35,7 +34,7 @@ func (s Store) deleteExpiredEntries() error {
 		}
 	}()
 
-	currentTime := formatTime(time.Now())
+	currentTime := formatTime(s.now())
 
 	if _, err = tx.Exec(`
    DELETE FROM

@@ -113,7 +113,7 @@ func TestEntryGet(t *testing.T) {
 		},
 	} {
 		t.Run(tt.description, func(t *testing.T) {
-			dataStore := test_sqlite.New()
+			dataStore := test_sqlite.New(t)
 
 			for _, mockEntry := range []mockEntry{
 				dummyTextEntry,
