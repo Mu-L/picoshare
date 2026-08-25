@@ -65,11 +65,15 @@ func main() {
 	if port == "" {
 		port = "4001"
 	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "localhost"
+	}
 
 	stop := setupSignalHandler()
 	httpSrv := http.Server{Addr: fmt.Sprintf(":%s", port), Handler: h}
 	go func() {
-		log.Printf("listening on %s", port)
+		log.Printf("listening on http://%s:%s", hostname, port)
 		log.Printf("http server exit: %s", httpSrv.ListenAndServe())
 	}()
 	<-stop
