@@ -1,10 +1,5 @@
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
-import { fileURLToPath } from "url";
-
-const globalSetupPath = fileURLToPath(
-  new URL("./helpers/global-setup", import.meta.url),
-);
 
 const config: PlaywrightTestConfig = {
   testDir: "./",
@@ -18,9 +13,7 @@ const config: PlaywrightTestConfig = {
   retries: process.env.CI ? 2 : 0,
   workers: undefined,
   reporter: "html",
-  globalSetup: globalSetupPath,
   use: {
-    baseURL: "http://localhost:6001",
     actionTimeout: 0,
     trace: "on",
     video: "on",
@@ -40,11 +33,6 @@ const config: PlaywrightTestConfig = {
   ],
 
   outputDir: "results/",
-
-  webServer: {
-    command: "PS_SHARED_SECRET=dummypass PORT=6001 TZ=UTC ../bin/picoshare-dev",
-    port: 6001,
-  },
 };
 
 export default config;

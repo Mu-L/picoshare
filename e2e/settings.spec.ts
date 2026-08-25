@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { login } from "./helpers/login";
 
 test("default file expiration is 30 days", async ({ page }) => {

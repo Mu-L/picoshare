@@ -25,7 +25,7 @@ func (s Server) entryGet() http.HandlerFunc {
 			return
 		}
 
-		entry, err := s.getDB(r).GetEntryMetadata(id)
+		entry, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -47,7 +47,7 @@ func (s Server) entryGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", contentType.String())
 
-		entryFile, err := s.getDB(r).ReadEntryFile(id)
+		entryFile, err := s.store.ReadEntryFile(id)
 		if err != nil {
 			log.Printf("error retrieving entry data with id %v: %v", id, err)
 			http.Error(w, "failed to retrieve entry", http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func (s Server) entryGet() http.HandlerFunc {
 
 		http.ServeContent(w, r, entry.Filename.String(), entry.Uploaded, entryFile)
 
-		if err := recordDownload(s.getDB(r), entry.ID, s.clock.Now(), r.RemoteAddr, r.Header.Get("User-Agent")); err != nil {
+		if err := recordDownload(s.store, entry.ID, s.clock.Now(), r.RemoteAddr, r.Header.Get("User-Agent")); err != nil {
 			log.Printf("failed to record download of file %s: %v", id.String(), err)
 		}
 	}

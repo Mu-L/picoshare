@@ -1,6 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { login } from "./helpers/login";
-import { readDbTokenCookie } from "./helpers/db";
 
 const labelColumn = 0;
 const expiresColumn = 4;
@@ -8,6 +7,7 @@ const expiresColumn = 4;
 test("creates a guest link and uploads a file as a guest", async ({
   page,
   browser,
+  baseURL,
 }) => {
   await login(page);
 
@@ -37,14 +37,7 @@ test("creates a guest link and uploads a file as a guest", async ({
   const guestLinkRoute = String(guestLinkRouteValue);
 
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
@@ -73,6 +66,7 @@ test("creates a guest link and uploads a file as a guest", async ({
 
     await expect(guestPage.locator("h1")).toContainText("Guest Link Inactive");
     await expect(guestPage.locator(".file-input")).toHaveCount(0);
+    await guestContext.close();
   }
   await page.getByRole("menuitem", { name: "Files" }).click();
   await expect(
@@ -87,6 +81,7 @@ test("creates a guest link and uploads a file as a guest", async ({
 test("files uploaded through guest link remain accessible after guest link is deleted", async ({
   page,
   browser,
+  baseURL,
 }) => {
   await login(page);
 
@@ -115,14 +110,7 @@ test("files uploaded through guest link remain accessible after guest link is de
   const guestLinkRoute = String(guestLinkRouteValue);
 
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users.
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
@@ -136,6 +124,7 @@ test("files uploaded through guest link remain accessible after guest link is de
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
       "Upload complete!",
     );
+    await guestContext.close();
   }
 
   await guestLinkRow.getByRole("button", { name: "Delete" }).click();
@@ -177,6 +166,7 @@ test("invalid options on guest link generate error message", async ({
 test("disables and enables a guest link, affecting access", async ({
   page,
   browser,
+  baseURL,
 }) => {
   await login(page);
 
@@ -213,19 +203,13 @@ test("disables and enables a guest link, affecting access", async ({
 
   // Try to access the guest link as a guest user.
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users.
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
     await expect(guestPage.locator("h1")).toContainText("Guest Link Inactive");
     await expect(guestPage.locator(".file-input")).toHaveCount(0);
+    await guestContext.close();
   }
 
   // Enable the guest link.
@@ -237,25 +221,20 @@ test("disables and enables a guest link, affecting access", async ({
 
   // Try to access the guest link as a guest user.
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users.
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
     await expect(guestPage.locator("h1")).toContainText("Upload");
     await expect(guestPage.locator(".file")).toBeVisible();
+    await guestContext.close();
   }
 });
 
 test("guest upload shows expiration dropdown with options limited by guest link", async ({
   page,
   browser,
+  baseURL,
 }) => {
   await login(page);
 
@@ -287,14 +266,7 @@ test("guest upload shows expiration dropdown with options limited by guest link"
   const guestLinkRoute = String(guestLinkRouteValue);
 
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users.
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
@@ -331,6 +303,7 @@ test("guest upload shows expiration dropdown with options limited by guest link"
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
       "Upload complete!",
     );
+    await guestContext.close();
   }
 
   // Check that the file has the correct expiration (7 days).
@@ -356,6 +329,7 @@ test("guest upload shows expiration dropdown with options limited by guest link"
 test("guest upload with infinite file lifetime shows all expiration options", async ({
   page,
   browser,
+  baseURL,
 }) => {
   await login(page);
 
@@ -385,14 +359,7 @@ test("guest upload with infinite file lifetime shows all expiration options", as
   const guestLinkRoute = String(guestLinkRouteValue);
 
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users.
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
@@ -429,6 +396,7 @@ test("guest upload with infinite file lifetime shows all expiration options", as
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
       "Upload complete!",
     );
+    await guestContext.close();
   }
 
   // Check that the file has the correct expiration (Never).
@@ -448,6 +416,7 @@ test("guest upload with infinite file lifetime shows all expiration options", as
 test("guest upload respects selected expiration time", async ({
   page,
   browser,
+  baseURL,
 }) => {
   await login(page);
 
@@ -477,14 +446,7 @@ test("guest upload respects selected expiration time", async ({
   const guestLinkRoute = String(guestLinkRouteValue);
 
   {
-    const guestContext = await browser.newContext();
-
-    // Share database across users.
-    const dbCookie = readDbTokenCookie(await page.context().cookies());
-    if (dbCookie) {
-      await guestContext.addCookies([dbCookie]);
-    }
-
+    const guestContext = await browser.newContext({ baseURL });
     const guestPage = await guestContext.newPage();
 
     await guestPage.goto(guestLinkRoute);
@@ -504,6 +466,7 @@ test("guest upload respects selected expiration time", async ({
     await expect(guestPage.locator("#upload-result .message-body")).toHaveText(
       "Upload complete!",
     );
+    await guestContext.close();
   }
 
   // Check that the file has the correct expiration (7 days, not 30).

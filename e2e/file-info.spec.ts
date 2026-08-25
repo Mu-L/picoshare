@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { login } from "./helpers/login";
 
 test("upload a file with no attributes, and verify the file info page is correct", async ({

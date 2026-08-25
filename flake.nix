@@ -152,8 +152,7 @@
             mkdir -p ./bin
             cp ${backend-dev}/bin/picoshare-dev ./bin/picoshare-dev
 
-            cd e2e
-            npx playwright test --project=chromium
+            ./dev-scripts/run-e2e-tests --skip-build --project=chromium
           '';
           installPhase = ''
             mkdir -p "$out"

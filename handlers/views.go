@@ -92,7 +92,7 @@ func (s Server) guestLinkIndexGet() http.HandlerFunc {
 
 	t := parseTemplatesWithFuncs(fns, "templates/pages/guest-link-index.html")
 	return func(w http.ResponseWriter, r *http.Request) {
-		links, err := s.getDB(r).GetGuestLinks()
+		links, err := s.store.GetGuestLinks()
 		if err != nil {
 			log.Printf("failed to retrieve guest links: %v", err)
 			http.Error(w, "Failed to retrieve guest links", http.StatusInternalServerError)
@@ -185,7 +185,7 @@ func (s Server) fileIndexGet() http.HandlerFunc {
 	t := parseTemplatesWithFuncs(fns, "templates/pages/file-index.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		em, err := s.getDB(r).GetEntriesMetadata()
+		em, err := s.store.GetEntriesMetadata()
 		if err != nil {
 			log.Printf("failed to retrieve entries metadata: %v", err)
 			http.Error(w, "failed to retrieve file index", http.StatusInternalServerError)
@@ -232,7 +232,7 @@ func (s Server) fileEditGet() http.HandlerFunc {
 			return
 		}
 
-		metadata, err := s.getDB(r).GetEntryMetadata(id)
+		metadata, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -286,7 +286,7 @@ func (s Server) fileInfoGet() http.HandlerFunc {
 			return
 		}
 
-		metadata, err := s.getDB(r).GetEntryMetadata(id)
+		metadata, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -296,7 +296,7 @@ func (s Server) fileInfoGet() http.HandlerFunc {
 			return
 		}
 
-		downloads, err := s.getDB(r).GetEntryDownloads(id)
+		downloads, err := s.store.GetEntryDownloads(id)
 		if err != nil {
 			log.Printf("error retrieving downloads for id %v: %v", id, err)
 			http.Error(w, "failed to retrieve downloads", http.StatusInternalServerError)
@@ -337,7 +337,7 @@ func (s Server) fileDownloadsGet() http.HandlerFunc {
 			return
 		}
 
-		db := s.getDB(r)
+		db := s.store
 
 		metadata, err := db.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
@@ -418,7 +418,7 @@ func (s Server) fileConfirmDeleteGet() http.HandlerFunc {
 			return
 		}
 
-		metadata, err := s.getDB(r).GetEntryMetadata(id)
+		metadata, err := s.store.GetEntryMetadata(id)
 		if _, ok := errors.AsType[store.EntryNotFoundError](err); ok {
 			http.Error(w, "entry not found", http.StatusNotFound)
 			return
@@ -473,7 +473,7 @@ func (s Server) uploadGet() http.HandlerFunc {
 		"templates/pages/upload.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		settings, err := s.getDB(r).ReadSettings()
+		settings, err := s.store.ReadSettings()
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to read settings from database: %v", err), http.StatusInternalServerError)
 			return
@@ -566,7 +566,7 @@ func (s Server) guestUploadGet() http.HandlerFunc {
 			return
 		}
 
-		gl, err := s.getDB(r).GetGuestLink(guestLinkID)
+		gl, err := s.store.GetGuestLink(guestLinkID)
 		if _, ok := errors.AsType[store.GuestLinkNotFoundError](err); ok {
 			http.Error(w, "Invalid guest link ID", http.StatusNotFound)
 			return
@@ -657,7 +657,7 @@ func (s Server) settingsGet() http.HandlerFunc {
 	t := parseTemplates("templates/pages/settings.html")
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		settings, err := s.getDB(r).ReadSettings()
+		settings, err := s.store.ReadSettings()
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to read settings from database: %v", err), http.StatusInternalServerError)
 			return

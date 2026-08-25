@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { login } from "./helpers/login";
 
 test("sandboxed HTML downloads cannot log out the current user session", async ({
