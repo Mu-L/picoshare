@@ -60,15 +60,9 @@
       nodejs = nodepkgs.nodejs_20;
       shellcheck = shellcheck-nixpkgs.legacyPackages.${system}.shellcheck;
       sqlfluff = sqlfluff-nixpkgs.legacyPackages.${system}.sqlfluff;
-      playwright = playwright-nixpkgs.legacyPackages.${system}.playwright-driver.browsers;
       flyctl = flyctl-nixpkgs.legacyPackages.${system}.flyctl;
       litestream = litestream-nixpkgs.legacyPackages.${system}.litestream;
       air = air-nixpkgs.legacyPackages.${system}.air;
-
-      # Fonts for Playwright browser tests.
-      fontsConf = nodepkgs.makeFontsConf {
-        fontDirectories = [nodepkgs.dejavu_fonts];
-      };
 
       goVendorHash = "sha256-X2vrEhgEnKKNXRyLCtT+wBbunFHgkcyWZh6DMpQieQ0=";
 
@@ -129,36 +123,42 @@
           '';
         };
 
-        e2e-tests = nodepkgs.buildNpmPackage {
-          pname = "picoshare-e2e-tests";
-          version = "0.0.1";
-          src = nodepkgs.lib.cleanSource ./.;
-          inherit npmDepsHash;
-          npmInstallFlags = ["--ignore-scripts"];
-          dontNpmBuild = true;
-          nativeBuildInputs = [nodejs playwright backend-dev];
-          doCheck = true;
-          checkPhase = ''
-            export HOME="$PWD/.home"
-            mkdir -p "$HOME"
-            export CI=1
-            export PLAYWRIGHT_BROWSERS_PATH=${playwright}
-            export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-            export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
+        e2e-tests = let
+          playwrightBrowsers = playwright-nixpkgs.legacyPackages.${system}.playwright-driver.browsers;
+          fontsConf = nodepkgs.makeFontsConf {
+            fontDirectories = [nodepkgs.dejavu_fonts];
+          };
+        in
+          nodepkgs.buildNpmPackage {
+            pname = "picoshare-e2e-tests";
+            version = "0.0.1";
+            src = nodepkgs.lib.cleanSource ./.;
+            inherit npmDepsHash;
+            npmInstallFlags = ["--ignore-scripts"];
+            dontNpmBuild = true;
+            nativeBuildInputs = [nodejs playwrightBrowsers backend-dev];
+            doCheck = true;
+            checkPhase = ''
+              export HOME="$PWD/.home"
+              mkdir -p "$HOME"
+              export CI=1
+              export PLAYWRIGHT_BROWSERS_PATH=${playwrightBrowsers}
+              export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+              export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
 
-            # Configure fonts for headless browser rendering.
-            export FONTCONFIG_FILE=${fontsConf}
+              # Configure fonts for headless browser rendering.
+              export FONTCONFIG_FILE=${fontsConf}
 
-            mkdir -p ./bin
-            cp ${backend-dev}/bin/picoshare-dev ./bin/picoshare-dev
+              mkdir -p ./bin
+              cp ${backend-dev}/bin/picoshare-dev ./bin/picoshare-dev
 
-            ./dev-scripts/run-e2e-tests --skip-build --project=chromium
-          '';
-          installPhase = ''
-            mkdir -p "$out"
-            printf 'e2e-tests passed\n' > "$out/result"
-          '';
-        };
+              ./dev-scripts/run-e2e-tests --skip-build --project=chromium
+            '';
+            installPhase = ''
+              mkdir -p "$out"
+              printf 'e2e-tests passed\n' > "$out/result"
+            '';
+          };
       };
 
       checks = {
@@ -184,7 +184,6 @@
             nodejs
             shellcheck
             sqlfluff
-            playwright
             flyctl
             litestream
             air
@@ -194,9 +193,6 @@
             # Avoid sharing GOPATH with other projects.
             PROJECT_NAME="$(basename "$PWD")"
             export GOPATH="$HOME/.local/share/go-workspaces/$PROJECT_NAME"
-
-            export PLAYWRIGHT_BROWSERS_PATH=${playwright}
-            export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
 
             # Restore the exact lockfile dependency set when manifests change.
             if [ -f package.json ]; then
