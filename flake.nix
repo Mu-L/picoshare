@@ -7,8 +7,8 @@
     # Use https://www.nixhub.io/ to find the right nixpkgs commit for the
     # specific package version we want.
 
-    # 1.26.0 release
-    go-nixpkgs.url = "github:NixOS/nixpkgs/a82ccc39b39b621151d6732718e3e250109076fa";
+    # 1.26.1 release
+    go-nixpkgs.url = "github:NixOS/nixpkgs/e607cb5360ff1234862ac9f8839522becb853bb9";
 
     # 3.44.2 release
     sqlite-nixpkgs.url = "github:NixOS/nixpkgs/5ad9903c16126a7d949101687af0aa589b1d7d3d";

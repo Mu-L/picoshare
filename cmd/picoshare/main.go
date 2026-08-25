@@ -54,7 +54,9 @@ func main() {
 
 	server := handlers.New(authenticator, &store, spaceChecker, &collector, &clock)
 
-	h := gorilla.LoggingHandler(os.Stdout, server.Router())
+	// CrossOriginProtection rejects non-safe cross-origin requests to prevent CSRF.
+	protectedRouter := http.NewCrossOriginProtection().Handler(server.Router())
+	h := gorilla.LoggingHandler(os.Stdout, protectedRouter)
 	if os.Getenv("PS_BEHIND_PROXY") != "" {
 		h = gorilla.ProxyIPHeadersHandler(h)
 	}
